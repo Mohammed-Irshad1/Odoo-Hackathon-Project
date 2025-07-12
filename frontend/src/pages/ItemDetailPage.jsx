@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
 import api from '../api/axios';
 
@@ -8,6 +8,8 @@ const ItemDetailPage = () => {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionMsg, setActionMsg] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -24,6 +26,27 @@ const ItemDetailPage = () => {
     };
     fetchItem();
   }, [id]);
+
+  const handleStatusChange = async (newStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      await api.put(`/items/${id}`, { status: newStatus }, { headers: { Authorization: `Bearer ${token}` } });
+      setItem(item => ({ ...item, status: newStatus }));
+      setActionMsg(newStatus === 'swap requested' ? 'Swap requested!' : 'Redeemed via points!');
+    } catch (err) {
+      setActionMsg('Failed to update status.');
+    }
+  };
+
+  const handleSwapRequest = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await api.post('/items/swap-requests', { itemId: item.id, ownerId: item.user_id }, { headers: { Authorization: `Bearer ${token}` } });
+      setActionMsg('Swap request sent!');
+    } catch (err) {
+      setActionMsg('Failed to send swap request.');
+    }
+  };
 
   return (
     <div className="container py-5">
@@ -56,9 +79,17 @@ const ItemDetailPage = () => {
                 <p><strong>Tags:</strong> {item.tags}</p>
                 <p><strong>Uploader:</strong> User #{item.user_id}</p>
                 <div className="d-flex gap-2">
-                  <Button variant="primary">Swap Request</Button>
-                  <Button variant="success">Redeem via Points</Button>
+                  <Button variant="primary" disabled={item.status === 'swap requested' || item.status === 'redeemed'} onClick={handleSwapRequest}>Swap Request</Button>
+                  <Button variant="success" disabled={item.status === 'redeemed'} onClick={() => handleStatusChange('redeemed')}>Redeem via Points</Button>
+                  <Button
+                    variant="info"
+                    className="mt-2"
+                    onClick={() => navigate(`/messages?userId=${item.user_id}&itemId=${item.id}&partnerName=User%20${item.user_id}&itemTitle=${encodeURIComponent(item.title || item.name)}`)}
+                  >
+                    Message Owner
+                  </Button>
                 </div>
+                {actionMsg && <Alert className="mt-3" variant="info">{actionMsg}</Alert>}
                 <div className="mt-3"><span className="badge bg-info">{item.status || 'Available'}</span></div>
               </Card.Body>
             </Card>

@@ -17,11 +17,15 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.get('/', itemController.getAllItems);
+router.get('/admin/all', authMiddleware, itemController.getAllItemsForAdmin);
 router.get('/:id', itemController.getItemById);
 
 router.use(authMiddleware);
 router.post('/', upload.single('image'), itemController.createItem);
 router.put('/:id', upload.single('image'), itemController.updateItem);
 router.delete('/:id', itemController.deleteItem);
+router.post('/swap-requests', itemController.createSwapRequest);
+router.get('/swap-requests', itemController.getSwapRequests);
+router.put('/swap-requests/:id', itemController.updateSwapRequest);
 
 module.exports = router;

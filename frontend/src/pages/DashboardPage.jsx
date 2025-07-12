@@ -37,6 +37,9 @@ const DashboardPage = () => {
   const [items, setItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [itemsError, setItemsError] = useState('');
+  const [swapRequests, setSwapRequests] = useState([]);
+  const [swapLoading, setSwapLoading] = useState(true);
+  const [swapError, setSwapError] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -74,6 +77,23 @@ const DashboardPage = () => {
     fetchItems();
   }, []);
 
+  useEffect(() => {
+    const fetchSwapRequests = async () => {
+      setSwapLoading(true);
+      setSwapError('');
+      try {
+        const token = localStorage.getItem('token');
+        const res = await api.get('/items/swap-requests', { headers: { Authorization: `Bearer ${token}` } });
+        setSwapRequests(res.data);
+      } catch (err) {
+        setSwapError('Failed to load swap requests.');
+      } finally {
+        setSwapLoading(false);
+      }
+    };
+    fetchSwapRequests();
+  }, []);
+
   return (
     <div className="container py-5">
       <h2 className="mb-4">User Dashboard</h2>
@@ -93,10 +113,104 @@ const DashboardPage = () => {
             </Card.Body></Card>
           </Col>
           <Col md={4}>
-            <Card><Card.Body><Card.Title>My Listings</Card.Title><p>[Uploaded Items]</p></Card.Body></Card>
+            <Card><Card.Body><Card.Title>My Listings</Card.Title>
+              {itemsLoading ? (
+                <div className="text-center"><Spinner animation="border" size="sm" /></div>
+              ) : (
+                <>
+                  {items.filter(item => item.user_id === profile.id).length === 0 ? (
+                    <p>No items uploaded yet.</p>
+                  ) : (
+                    items.filter(item => item.user_id === profile.id).map(item => (
+                      <ItemCard key={item.id} image={item.image ? `http://localhost:5000/uploads/${item.image}` : undefined} name={item.title || item.name} description={item.description} />
+                    ))
+                  )}
+                </>
+              )}
+            </Card.Body></Card>
           </Col>
         </Row>
       )}
+      {profile && (
+        <Row className="mb-4">
+          <Col md={6}>
+            <Card><Card.Body><Card.Title>My Purchases</Card.Title>
+              {itemsLoading ? (
+                <div className="text-center"><Spinner animation="border" size="sm" /></div>
+              ) : (
+                <>
+                  {items.filter(item => item.status === 'redeemed' && item.user_id === profile.id).length === 0 ? (
+                    <p>No purchases yet.</p>
+                  ) : (
+                    items.filter(item => item.status === 'redeemed' && item.user_id === profile.id).map(item => (
+                      <ItemCard key={item.id} image={item.image ? `http://localhost:5000/uploads/${item.image}` : undefined} name={item.title || item.name} description={item.description} />
+                    ))
+                  )}
+                </>
+              )}
+            </Card.Body></Card>
+          </Col>
+          <Col md={6}>
+            <Card><Card.Body><Card.Title>My Swaps</Card.Title>
+              {itemsLoading ? (
+                <div className="text-center"><Spinner animation="border" size="sm" /></div>
+              ) : (
+                <>
+                  {items.filter(item => item.status === 'swap requested' && item.user_id === profile.id).length === 0 ? (
+                    <p>No swap requests yet.</p>
+                  ) : (
+                    items.filter(item => item.status === 'swap requested' && item.user_id === profile.id).map(item => (
+                      <ItemCard key={item.id} image={item.image ? `http://localhost:5000/uploads/${item.image}` : undefined} name={item.title || item.name} description={item.description} />
+                    ))
+                  )}
+                </>
+              )}
+            </Card.Body></Card>
+          </Col>
+        </Row>
+      )}
+      <Row className="mb-4">
+        <Col md={12}>
+          <Card><Card.Body><Card.Title>Swap Requests</Card.Title>
+            {swapLoading ? (
+              <div className="text-center"><Spinner animation="border" size="sm" /></div>
+            ) : swapError ? (
+              <Alert variant="danger">{swapError}</Alert>
+            ) : swapRequests.length === 0 ? (
+              <p>No swap requests yet.</p>
+            ) : (
+              <table className="table table-sm">
+                <thead><tr><th>Item ID</th><th>Requester</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>
+                  {swapRequests.map(req => (
+                    <tr key={req.id}>
+                      <td>{req.item_id}</td>
+                      <td>{req.requester_id}</td>
+                      <td>{req.status}</td>
+                      <td>
+                        {profile && req.owner_id === profile.id && req.status === 'pending' && (
+                          <>
+                            <button className="btn btn-success btn-sm me-2" onClick={async () => {
+                              const token = localStorage.getItem('token');
+                              await api.put(`/items/swap-requests/${req.id}`, { status: 'approved' }, { headers: { Authorization: `Bearer ${token}` } });
+                              setSwapRequests(swapRequests => swapRequests.map(r => r.id === req.id ? { ...r, status: 'approved' } : r));
+                            }}>Approve</button>
+                            <button className="btn btn-danger btn-sm" onClick={async () => {
+                              const token = localStorage.getItem('token');
+                              await api.put(`/items/swap-requests/${req.id}`, { status: 'declined' }, { headers: { Authorization: `Bearer ${token}` } });
+                              setSwapRequests(swapRequests => swapRequests.map(r => r.id === req.id ? { ...r, status: 'declined' } : r));
+                            }}>Decline</button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Card.Body></Card>
+        </Col>
+      </Row>
       <h3 className="mb-3">Product Listings</h3>
       {itemsLoading && <div className="text-center"><Spinner animation="border" /></div>}
       {itemsError && <Alert variant="warning">{itemsError}</Alert>}

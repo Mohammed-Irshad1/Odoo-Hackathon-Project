@@ -22,4 +22,22 @@ async function createUser({ name, email, password }) {
   return { id: result.insertId, name, email };
 }
 
-module.exports = { findUserByEmail, createUser };
+async function getAllUsers() {
+  const [rows] = await pool.query('SELECT id, name, email, points, created_at FROM users');
+  return rows;
+}
+
+async function incrementUserPoints(userId, amount) {
+  await pool.query('UPDATE users SET points = points + ? WHERE id = ?', [amount, userId]);
+}
+
+async function decrementUserPoints(userId, amount) {
+  await pool.query('UPDATE users SET points = GREATEST(points - ?, 0) WHERE id = ?', [amount, userId]);
+}
+
+async function getUserPoints(userId) {
+  const [rows] = await pool.query('SELECT points FROM users WHERE id = ?', [userId]);
+  return rows[0]?.points || 0;
+}
+
+module.exports = { findUserByEmail, createUser, getAllUsers, incrementUserPoints, decrementUserPoints, getUserPoints };
