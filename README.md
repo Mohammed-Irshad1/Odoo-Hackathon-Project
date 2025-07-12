@@ -28,7 +28,7 @@ A full-stack web application that promotes sustainable fashion by enabling users
 1. Clone the repository
    ```bash
    git clone <repository-url>
-   cd Odoo-Hackathon-Project
+   cd ReWear-Odoo-Hackathon
    ```
 
 2. Backend Setup
