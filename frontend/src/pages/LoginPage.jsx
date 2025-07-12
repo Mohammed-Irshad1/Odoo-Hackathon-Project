@@ -17,7 +17,6 @@ const LoginPage = () => {
       const res = await api.post('/auth/login', form);
       setSuccess('Login successful!');
       localStorage.setItem('token', res.data.token);
-      // Optionally redirect or update app state here
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }

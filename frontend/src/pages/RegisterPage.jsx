@@ -25,7 +25,6 @@ const RegisterPage = () => {
       });
       setSuccess('Registration successful!');
       localStorage.setItem('token', res.data.token);
-      // Optionally redirect or update app state here
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }

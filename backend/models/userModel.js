@@ -1,7 +1,6 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
 
-// Placeholder for DB connection - replace with your actual config
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',

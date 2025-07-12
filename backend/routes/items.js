@@ -5,7 +5,6 @@ const path = require('path');
 const itemController = require('../controllers/itemController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// Multer setup for image uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, path.join(__dirname, '../uploads'));
@@ -17,11 +16,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Public routes
 router.get('/', itemController.getAllItems);
 router.get('/:id', itemController.getItemById);
 
-// Protected routes
 router.use(authMiddleware);
 router.post('/', upload.single('image'), itemController.createItem);
 router.put('/:id', upload.single('image'), itemController.updateItem);

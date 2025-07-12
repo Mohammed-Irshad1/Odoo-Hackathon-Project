@@ -1,6 +1,5 @@
 const mysql = require('mysql2/promise');
 
-// DB connection pool (reuse config from userModel if you want)
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',

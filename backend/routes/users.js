@@ -3,7 +3,6 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
 
-// All routes below require authentication
 router.use(authMiddleware);
 
 router.get('/me', userController.getProfile);
